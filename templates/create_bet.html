@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}Create New Bet{% endblock %}
+
+{% block content %}
+    <h2>Create a New Bet</h2>
+    <form method="POST" action="{{ url_for('create_bet') }}">
+        <div class="mb-3">
+            <label for="title" class="form-label">Title</label>
+            <input type="text" class="form-control" id="title" name="title" required>
+        </div>
+        <div class="mb-3">
+            <label for="description" class="form-label">Description</label>
+            <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+        </div>
+        <div class="mb-3">
+            <label for="expiration_date" class="form-label">Expiration Date and Time</label>
+            <input type="datetime-local" class="form-control" id="expiration_date" name="expiration_date" required>
+        </div>
+        <div class="mb-3">
+            <label for="outcomes" class="form-label">Possible Outcomes (comma-separated)</label>
+            <input type="text" class="form-control" id="outcomes" name="outcomes" placeholder="e.g., Yes, No, Maybe" required>
+            <div class="form-text">Please provide at least two outcomes.</div>
+        </div>
+        <button type="submit" class="btn btn-primary">Create Bet</button>
+    </form>
+{% endblock %} 
