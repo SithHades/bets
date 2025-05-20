@@ -1,125 +1,364 @@
 {% extends "base.html" %}
 
-{% block title %}All Bets{% endblock %}
+{% block title %}Bet Overview | BetFlow{% endblock %}
 
 {% block content %}
-    <h1>Bet Overview</h1>
+<div class="mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h2 mb-0">Bet Overview</h1>
+        {% if current_user.is_authenticated %}
+            <a href="{{ url_for('create_bet') }}" class="btn btn-primary">
+                <i class="bi bi-plus-lg me-1"></i> Create New Bet
+            </a>
+        {% endif %}
+    </div>
 
-    <h2>Active Bets</h2>
-    {% if bet_data|selectattr("bet.resolved", "equalto", false)|list %}
-        {% for item in bet_data if not item.bet.resolved %}
-            <div class="bet-card">
-                <h3>{{ item.bet.title }} <span class="badge bg-success">Active</span></h3>
-                <p>{{ item.bet.description }}</p>
-                <p><small>Created by: {{ item.bet.creator.name }} | Expires: {{ item.bet.expiration_date.strftime('%Y-%m-%d %H:%M') }}</small></p>
-                <p><small>Participants ({{ item.total_bets_on_this_bet }}): {{ item.users_who_betted|join(', ') if item.users_who_betted else 'None yet' }}</small></p>
+    <!-- Active Bets Section -->
+    <section class="mb-5">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="h4">
+                <i class="bi bi-lightning-charge-fill text-warning me-2"></i>Active Bets
+                <span class="badge bg-primary-soft text-primary ms-2">
+                    {{ bet_data|selectattr("bet.resolved", "equalto", false)|list|length }}
+                </span>
+            </h2>
+        </div>
 
-                <h4>Outcomes & Probabilities:</h4>
-                {% for outcome in item.bet.get_outcomes_list() %}
-                    <div>
-                        <strong>{{ outcome }}</strong>: {{ "%.2f"|format(item.outcome_percentages[outcome]) }}%
-                        <div class="progress">
-                            <div class="progress-bar" role="progressbar" style="width: {{ item.outcome_percentages[outcome] }}%;" aria-valuenow="{{ item.outcome_percentages[outcome] }}" aria-valuemin="0" aria-valuemax="100"></div>
-                        </div>
-                    </div>
-                {% endfor %}
-
-                {% if current_user.is_authenticated %}
-                    {% if not item.bet.resolved and item.bet.expiration_date > current_server_time %}
-                        {% set user_has_bet = false %}
-                        {% for ub in item.bet.user_bets %}
-                            {% if ub.user_id == current_user.id %}
-                                {% set user_has_bet = true %}
-                            {% endif %}
-                        {% endfor %}
-
-                        {% if not user_has_bet %}
-                            <form method="POST" action="{{ url_for('place_bet', bet_id=item.bet.id) }}" class="mt-3">
-                                <div class="mb-3">
-                                    <label for="chosen_outcome_{{item.bet.id}}" class="form-label">Place Your Bet:</label>
-                                    <select name="chosen_outcome" id="chosen_outcome_{{item.bet.id}}" class="form-select">
-                                        {% for outcome in item.bet.get_outcomes_list() %}
-                                            <option value="{{ outcome }}">{{ outcome }}</option>
-                                        {% endfor %}
-                                    </select>
+        {% set active_bets = bet_data|selectattr("bet.resolved", "equalto", false)|list %}
+        {% if active_bets %}
+            <div class="accordion" id="activeBetsAccordion">
+                {% for item in active_bets %}
+                    <div class="accordion-item border-0 mb-3">
+                        <h2 class="accordion-header" id="heading{{ loop.index }}">
+                            <button class="accordion-button collapsed p-0 bg-transparent" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ loop.index }}" aria-expanded="false" aria-controls="collapse{{ loop.index }}">
+                                <div class="card w-100">
+                                    <div class="card-header d-flex justify-content-between align-items-center">
+                                        <h3 class="h5 mb-0">
+                                            {{ item.bet.title }}
+                                            <span class="badge bg-success-soft text-success ms-2">Active</span>
+                                        </h3>
+                                        <div class="d-flex align-items-center">
+                                            <span class="text-muted small me-3">
+                                                <i class="bi bi-people-fill me-1"></i> {{ item.total_bets_on_this_bet }}
+                                            </span>
+                                            <i class="bi bi-chevron-down accordion-arrow"></i>
+                                        </div>
+                                    </div>
                                 </div>
-                                <button type="submit" class="btn btn-primary btn-sm">Submit Bet</button>
-                            </form>
-                        {% else %}
-                            <p class="mt-3"><small><em>You have already placed a bet on this item. Your choice: 
-                                {% for ub in item.bet.user_bets %}
-                                    {% if ub.user_id == current_user.id %}
-                                        {{ ub.chosen_outcome }}
-                                    {% endif %}
-                                {% endfor %}
-                            </em></small></p>
-                        {% endif %}
-                    {% elif item.bet.expiration_date <= current_server_time and not item.bet.resolved %}
-                         <p class="mt-3"><span class="badge bg-warning text-dark">Expired - Awaiting Resolution</span></p>
-                    {% endif %}
-
-                    {% if item.bet.creator_id == current_user.id and not item.bet.resolved %}
-                        <form method="POST" action="{{ url_for('resolve_bet', bet_id=item.bet.id) }}" class="mt-3">
-                            <div class="mb-3">
-                                <label for="winning_outcome_{{item.bet.id}}" class="form-label">Resolve Bet (Select Winning Outcome):</label>
-                                <select name="winning_outcome" id="winning_outcome_{{item.bet.id}}" class="form-select">
+                            </button>
+                        </h2>
+                        <div id="collapse{{ loop.index }}" class="accordion-collapse collapse" aria-labelledby="heading{{ loop.index }}" data-bs-parent="#activeBetsAccordion">
+                            <div class="accordion-body p-0">
+                                <div class="card">
+                                    <div class="card-body">
+                                <p class="text-muted mb-4">{{ item.bet.description }}</p>
+                                
+                                <div class="mb-4">
+                                    <h4 class="h6 mb-3">Outcome Probabilities</h4>
                                     {% for outcome in item.bet.get_outcomes_list() %}
-                                        <option value="{{ outcome }}">{{ outcome }}</option>
+                                        <div class="mb-3">
+                                            <div class="d-flex justify-content-between mb-1">
+                                                <span class="fw-medium">{{ outcome }}</span>
+                                                <span class="text-primary fw-bold">{{ "%.1f"|format(item.outcome_percentages[outcome]) }}%</span>
+                                            </div>
+                                            <div class="progress" style="height: 8px;">
+                                                <div class="progress-bar bg-primary" 
+                                                     role="progressbar" 
+                                                     style="width: {{ item.outcome_percentages[outcome] }}%;" 
+                                                     aria-valuenow="{{ item.outcome_percentages[outcome] }}" 
+                                                     aria-valuemin="0" 
+                                                     aria-valuemax="100">
+                                                </div>
+                                            </div>
+                                        </div>
                                     {% endfor %}
-                                </select>
-                            </div>
-                            <button type="submit" class="btn btn-info btn-sm">Resolve Bet</button>
-                        </form>
-                    {% endif %}
-                {% endif %}
-            </div>
-        {% endfor %}
-    {% else %}
-        <p>No active bets at the moment.</p>
-    {% endif %}
+                                </div>
 
-    <hr class="my-4">
+                                <div class="d-flex justify-content-between align-items-center text-muted small mb-3">
+                                    <div>
+                                        <i class="bi bi-person-circle me-1"></i>
+                                        <span>Created by {{ item.bet.creator.name }}</span>
+                                    </div>
+                                    <div>
+                                        <i class="bi bi-clock me-1"></i>
+                                        <span>Expires {{ item.bet.expiration_date.strftime('%b %d, %Y %H:%M') }}</span>
+                                    </div>
+                                </div>
 
-    <h2>Resolved Bets</h2>
-    {% if bet_data|selectattr("bet.resolved", "equalto", true)|list %}
-        {% for item in bet_data if item.bet.resolved %}
-            <div class="bet-card">
-                <h3>{{ item.bet.title }} <span class="badge bg-secondary">Resolved</span></h3>
-                <p>{{ item.bet.description }}</p>
-                <p><small>Created by: {{ item.bet.creator.name }} | Expired: {{ item.bet.expiration_date.strftime('%Y-%m-%d %H:%M') }}</small></p>
-                <p><strong>Winning Outcome: <span class="text-success fw-bold">{{ item.bet.winning_outcome }}</span></strong></p>
-                
-                <h4>Participants & Results:</h4>
-                {% if item.bet.user_bets.all() %}
-                    <ul class="list-group list-group-flush mb-3">
-                        {% for user_bet_detail in item.bet.user_bets %}
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                {{ user_bet_detail.user.name }} chose: {{ user_bet_detail.chosen_outcome }}
-                                {% if user_bet_detail.chosen_outcome == item.bet.winning_outcome %}
-                                    <span class="badge bg-success rounded-pill">Won</span>
+                                {% if current_user.is_authenticated %}
+                                    {% if not item.bet.resolved and item.bet.expiration_date > current_server_time %}
+                                        {% set user_has_bet = false %}
+                                        {% set user_bet_outcome = none %}
+                                        {% for ub in item.bet.user_bets %}
+                                            {% if ub.user_id == current_user.id %}
+                                                {% set user_has_bet = true %}
+                                                {% set user_bet_outcome = ub.chosen_outcome %}
+                                            {% endif %}
+                                        {% endfor %}
+
+                                        {% if not user_has_bet %}
+                                            <form method="POST" action="{{ url_for('place_bet', bet_id=item.bet.id) }}" class="mt-3">
+                                                <div class="row g-2 align-items-center">
+                                                    <div class="col-md-8">
+                                                        <select name="chosen_outcome" id="chosen_outcome_{{item.bet.id}}" class="form-select">
+                                                            <option value="" disabled selected>Select an outcome</option>
+                                                            {% for outcome in item.bet.get_outcomes_list() %}
+                                                                <option value="{{ outcome }}">{{ outcome }}</option>
+                                                            {% endfor %}
+                                                        </select>
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <button type="submit" class="btn btn-primary w-100">
+                                                            <i class="bi bi-arrow-right me-1"></i> Place Bet
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </form>
+                                        {% else %}
+                                            <div class="alert alert-info d-flex align-items-center mb-0" role="alert">
+                                                <i class="bi bi-info-circle-fill me-2"></i>
+                                                <div>You've already bet on <strong>{{ user_bet_outcome }}</strong> for this bet.</div>
+                                            </div>
+                                        {% endif %}
+                                    {% elif item.bet.expiration_date <= current_server_time and not item.bet.resolved %}
+                                        <div class="alert alert-warning d-flex align-items-center mb-0" role="alert">
+                                            <i class="bi bi-hourglass-split me-2"></i>
+                                            <div>This bet has expired and is awaiting resolution by the creator.</div>
+                                        </div>
+                                    {% endif %}
+
+                                    {% if item.bet.creator_id == current_user.id and not item.bet.resolved %}
+                                        <form method="POST" action="{{ url_for('resolve_bet', bet_id=item.bet.id) }}" class="mt-4">
+                                            <div class="row g-2 align-items-center">
+                                                <div class="col-md-8">
+                                                    <select name="winning_outcome" id="winning_outcome_{{item.bet.id}}" class="form-select" required>
+                                                        <option value="" disabled selected>Select winning outcome</option>
+                                                        {% for outcome in item.bet.get_outcomes_list() %}
+                                                            <option value="{{ outcome }}">{{ outcome }}</option>
+                                                        {% endfor %}
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <button type="submit" class="btn btn-success w-100">
+                                                        <i class="bi bi-check2-circle me-1"></i> Resolve
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </form>
+                                    {% endif %}
                                 {% else %}
-                                    <span class="badge bg-danger rounded-pill">Lost</span>
+                                    <div class="alert alert-secondary mb-0">
+                                        <a href="{{ url_for('login') }}" class="alert-link">Sign in</a> to place a bet on this prediction.
+                                    </div>
                                 {% endif %}
-                            </li>
-                        {% endfor %}
-                    </ul>
-                {% else %}
-                    <p><small>No participants in this bet.</small></p>
-                {% endif %}
-
-                <h4>Final Outcome Distribution:</h4>
-                {% for outcome in item.bet.get_outcomes_list() %}
-                    <div>
-                        <strong>{{ outcome }}</strong>: {{ "%.2f"|format(item.outcome_percentages[outcome]) }}%
-                        <div class="progress">
-                            <div class="progress-bar {% if outcome == item.bet.winning_outcome %}bg-success{% else %}bg-danger{% endif %}" role="progressbar" style="width: {{ item.outcome_percentages[outcome] }}%;" aria-valuenow="{{ item.outcome_percentages[outcome] }}" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
                         </div>
                     </div>
                 {% endfor %}
             </div>
-        {% endfor %}
-    {% else %}
-        <p>No resolved bets yet.</p>
-    {% endif %}
+        {% else %}
+            <div class="text-center py-5 bg-light rounded-3">
+                <i class="bi bi-emoji-frown display-4 text-muted mb-3"></i>
+                <h3 class="h5 mb-2">No active bets at the moment</h3>
+                <p class="text-muted">Be the first to create a new bet!</p>
+                {% if current_user.is_authenticated %}
+                    <a href="{{ url_for('create_bet') }}" class="btn btn-primary mt-2">
+                        <i class="bi bi-plus-lg me-1"></i> Create Your First Bet
+                    </a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </section>
 
+    <!-- Resolved Bets Section -->
+    <section>
+        <h2 class="h4 mb-3">
+            <i class="bi bi-check2-circle text-success me-2"></i>Resolved Bets
+            <span class="badge bg-secondary-soft text-secondary ms-2">
+                {{ bet_data|selectattr("bet.resolved", "equalto", true)|list|length }}
+            </span>
+        </h2>
+
+        {% set resolved_bets = bet_data|selectattr("bet.resolved", "equalto", true)|list %}
+        {% if resolved_bets %}
+            <div class="accordion" id="resolvedBetsAccordion">
+                {% for item in resolved_bets %}
+                    <div class="accordion-item border-0 mb-3">
+                        <h2 class="accordion-header" id="resolvedHeading{{ loop.index }}">
+                            <button class="accordion-button collapsed p-0 bg-transparent" type="button" data-bs-toggle="collapse" data-bs-target="#resolvedCollapse{{ loop.index }}" aria-expanded="false" aria-controls="resolvedCollapse{{ loop.index }}">
+                                <div class="card w-100">
+                                    <div class="card-header d-flex justify-content-between align-items-center">
+                                        <h3 class="h5 mb-0">
+                                            {{ item.bet.title }}
+                                            <span class="badge bg-secondary-soft text-secondary">Resolved</span>
+                                        </h3>
+                                        <div class="d-flex align-items-center">
+                                            <span class="text-success fw-bold me-3">
+                                                <i class="bi bi-trophy-fill me-1"></i> {{ item.bet.winning_outcome }}
+                                            </span>
+                                            <i class="bi bi-chevron-down accordion-arrow"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </button>
+                        </h2>
+                        <div id="resolvedCollapse{{ loop.index }}" class="accordion-collapse collapse" aria-labelledby="resolvedHeading{{ loop.index }}" data-bs-parent="#resolvedBetsAccordion">
+                            <div class="accordion-body p-0">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <p class="text-muted mb-4">{{ item.bet.description }}</p>
+                                
+                                <div class="mb-4">
+                                    <h4 class="h6 mb-3">Final Results</h4>
+                                    <div class="table-responsive">
+                                        <table class="table table-hover align-middle">
+                                            <thead>
+                                                <tr>
+                                                    <th>Participant</th>
+                                                    <th>Prediction</th>
+                                                    <th class="text-end">Result</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% if item.bet.user_bets.all() %}
+                                                    {% for user_bet_detail in item.bet.user_bets %}
+                                                        <tr>
+                                                            <td class="d-flex align-items-center">
+                                                                <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;">
+                                                                    {{ user_bet_detail.user.name[0]|upper }}
+                                                                </div>
+                                                                {{ user_bet_detail.user.name }}
+                                                            </td>
+                                                            <td>{{ user_bet_detail.chosen_outcome }}</td>
+                                                            <td class="text-end">
+                                                                {% if user_bet_detail.chosen_outcome == item.bet.winning_outcome %}
+                                                                    <span class="badge bg-success-soft text-success">
+                                                                        <i class="bi bi-check-lg me-1"></i> Won
+                                                                    </span>
+                                                                {% else %}
+                                                                    <span class="badge bg-danger-soft text-danger">
+                                                                        <i class="bi bi-x-lg me-1"></i> Lost
+                                                                    </span>
+                                                                {% endif %}
+                                                            </td>
+                                                        </tr>
+                                                    {% endfor %}
+                                                {% else %}
+                                                    <tr>
+                                                        <td colspan="3" class="text-center text-muted py-3">No participants for this bet</td>
+                                                    </tr>
+                                                {% endif %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex justify-content-between text-muted small">
+                                    <div>
+                                        <i class="bi bi-person-circle me-1"></i>
+                                        <span>Created by {{ item.bet.creator.name }}</span>
+                                    </div>
+                                    <div>
+                                        <i class="bi bi-calendar-event me-1"></i>
+                                        <span>Ended {{ item.bet.expiration_date.strftime('%b %d, %Y') }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center py-5 bg-light rounded-3">
+                <i class="bi bi-emoji-smile display-4 text-muted mb-3"></i>
+                <h3 class="h5 mb-2">No resolved bets yet</h3>
+                <p class="text-muted">Check back later to see how predictions turned out!</p>
+            </div>
+        {% endif %}
+    </section>
+</div>
+
+<style>
+    /* Custom styles for this page */
+    .accordion-button:not(.collapsed) .accordion-arrow {
+        transform: rotate(180deg);
+    }
+    
+    .accordion-arrow {
+        transition: transform 0.2s ease-in-out;
+    }
+    
+    .accordion-button {
+        padding: 0;
+    }
+    
+    .accordion-button:not(.collapsed) {
+        background-color: transparent;
+        box-shadow: none;
+    }
+    
+    .accordion-button:focus {
+        box-shadow: none;
+        border-color: transparent;
+    }
+    
+    .bg-primary-soft {
+        background-color: rgba(99, 102, 241, 0.1) !important;
+        color: #6366f1 !important;
+    }
+    
+    .bg-success-soft {
+        background-color: rgba(16, 185, 129, 0.1) !important;
+        color: #10b981 !important;
+    }
+    
+    .bg-danger-soft {
+        background-color: rgba(239, 68, 68, 0.1) !important;
+        color: #ef4444 !important;
+    }
+    
+    .bg-secondary-soft {
+        background-color: rgba(148, 163, 184, 0.1) !important;
+        color: #94a3b8 !important;
+    }
+    
+    .progress {
+        overflow: visible;
+    }
+    
+    .progress-bar {
+        position: relative;
+        border-radius: 4px;
+    }
+    
+    .progress-bar::after {
+        content: attr(aria-valuenow) "%";
+        position: absolute;
+        right: 0;
+        top: -20px;
+        font-size: 0.7rem;
+        color: #64748b;
+    }
+    
+    .table th {
+        font-weight: 500;
+        color: #64748b;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .table td {
+        vertical-align: middle;
+    }
+    
+    .card {
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.1);
+    }
+</style>
 {% endblock %} 
