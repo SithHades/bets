@@ -72,6 +72,9 @@ def load_user(user_id):
 # Routes
 @app.route('/')
 def index():
+    if not current_user.is_authenticated and not session.get('has_passed_gate'):
+        return redirect(url_for('access_page'))
+
     active_bets = Bet.query.filter_by(resolved=False).order_by(Bet.expiration_date.desc()).all()
     resolved_bets = Bet.query.filter_by(resolved=True).order_by(Bet.expiration_date.desc()).all()
 
@@ -86,8 +89,9 @@ def index():
             if user_bet.chosen_outcome in outcome_counts:
                 outcome_counts[user_bet.chosen_outcome] += 1
             total_bets_on_this_bet += 1
-            users_who_betted.append(User.query.get(user_bet.user_id).name)
-
+            user_b = User.query.get(user_bet.user_id)
+            if user_b:
+                 users_who_betted.append(user_b.name)
 
         outcome_percentages = {}
         if total_bets_on_this_bet > 0:
@@ -100,11 +104,29 @@ def index():
         bet_data.append({
             'bet': bet,
             'outcome_percentages': outcome_percentages,
-            'users_who_betted': list(set(users_who_betted)), # Unique user names
+            'users_who_betted': list(set(users_who_betted)),
             'total_bets_on_this_bet': total_bets_on_this_bet
         })
     return render_template('index.html', bet_data=bet_data)
 
+@app.route('/access', methods=['GET', 'POST'])
+def access_page():
+    if session.get('has_passed_gate') or current_user.is_authenticated:
+        return redirect(url_for('index'))
+
+    if request.method == 'POST':
+        access_password = request.form.get('access_password')
+        if not DEFAULT_SIGNUP_PASSWORD:
+            flash('Site access password is not configured on the server.', 'danger')
+            return render_template('access_page.html')
+
+        if access_password == DEFAULT_SIGNUP_PASSWORD:
+            session['has_passed_gate'] = True
+            flash('Access granted.', 'success')
+            return redirect(url_for('index'))
+        else:
+            flash('Incorrect access password.', 'danger')
+    return render_template('access_page.html')
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -133,6 +155,7 @@ def register():
         new_user.set_password(password)
         db.session.add(new_user)
         db.session.commit()
+        session.pop('has_passed_gate', None) # Clear gate pass after registration
         flash('Registration successful! Please log in.', 'success')
         return redirect(url_for('login'))
     return render_template('register.html')
@@ -147,6 +170,7 @@ def login():
         user = User.query.filter_by(email=email).first()
         if user and user.check_password(password):
             login_user(user)
+            session.pop('has_passed_gate', None) # Clear gate pass after successful login
             flash('Logged in successfully!', 'success')
             return redirect(url_for('index'))
         else:
@@ -157,17 +181,19 @@ def login():
 @login_required
 def logout():
     logout_user()
+    session.pop('has_passed_gate', None)
     flash('You have been logged out.', 'info')
-    return redirect(url_for('login'))
+    return redirect(url_for('login')) # Redirect to login, which will then check gate or auth
 
 @app.route('/create_bet', methods=['GET', 'POST'])
 @login_required
 def create_bet():
+    # Gatekeeper check for index page should suffice; direct access to create_bet requires login.
     if request.method == 'POST':
         title = request.form.get('title')
         description = request.form.get('description')
         expiration_date_str = request.form.get('expiration_date')
-        outcomes_str = request.form.get('outcomes') # e.g., "Outcome A, Outcome B, Outcome C"
+        outcomes_str = request.form.get('outcomes')
 
         if not all([title, expiration_date_str, outcomes_str]):
             flash('Title, expiration date, and outcomes are required.', 'danger')
@@ -211,7 +237,7 @@ def place_bet(bet_id):
     chosen_outcome = request.form.get('chosen_outcome')
     if not chosen_outcome or chosen_outcome not in bet.get_outcomes_list():
         flash('Invalid outcome selected.', 'danger')
-        return redirect(url_for('index')) # Or back to bet detail page if you create one
+        return redirect(url_for('index'))
 
     existing_bet = UserBet.query.filter_by(user_id=current_user.id, bet_id=bet_id).first()
     if existing_bet:
@@ -235,16 +261,10 @@ def resolve_bet(bet_id):
     if bet.resolved:
         flash('This bet has already been resolved.', 'warning')
         return redirect(url_for('index'))
-    # We might allow resolving before expiration, or enforce it. For now, allow.
-    # if datetime.datetime.now() <= bet.expiration_date:
-    #     flash('This bet has not expired yet.', 'warning')
-    #     return redirect(url_for('index'))
 
     winning_outcome = request.form.get('winning_outcome')
     if not winning_outcome or winning_outcome not in bet.get_outcomes_list():
         flash('Invalid winning outcome selected.', 'danger')
-        # It's better to redirect to a page where they can see the bet and its outcomes again.
-        # For simplicity, redirecting to index.
         return redirect(url_for('index'))
 
     bet.resolved = True
@@ -252,7 +272,6 @@ def resolve_bet(bet_id):
     db.session.commit()
     flash(f'Bet "{bet.title}" resolved. Winning outcome: {winning_outcome}', 'success')
     return redirect(url_for('index'))
-
 
 def create_tables():
     with app.app_context():
