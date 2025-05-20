@@ -11,4 +11,8 @@ ENV FLASK_APP=app.py
 ENV FLASK_RUN_HOST=0.0.0.0
 # The DEFAULT_SIGNUP_PASSWORD will be set in the Coolify environment variables
 
-CMD ["flask", "run"] 
+# Make entrypoint script executable (alternative to running chmod separately)
+# RUN chmod +x /app/entrypoint.sh # This is one way, or ensure it's executable before COPY
+
+ENTRYPOINT ["/app/entrypoint.sh"]
+# CMD is now part of entrypoint.sh 
