@@ -35,6 +35,8 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(200), nullable=False)
     bets_placed = db.relationship('UserBet', backref='user', lazy='dynamic')
     created_bets = db.relationship('Bet', backref='creator', lazy='dynamic')
+    wins = db.Column(db.Integer, default=0, nullable=False)
+    losses = db.Column(db.Integer, default=0, nullable=False)
 
     def set_password(self, password):
         self.password_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
@@ -269,9 +271,28 @@ def resolve_bet(bet_id):
 
     bet.resolved = True
     bet.winning_outcome = winning_outcome
+
+    # Update win/loss records for participants
+    for user_bet_record in bet.user_bets:
+        user = User.query.get(user_bet_record.user_id)
+        if user:
+            if user_bet_record.chosen_outcome == winning_outcome:
+                user.wins = (user.wins or 0) + 1
+            else:
+                user.losses = (user.losses or 0) + 1
+
     db.session.commit()
     flash(f'Bet "{bet.title}" resolved. Winning outcome: {winning_outcome}', 'success')
     return redirect(url_for('index'))
+
+@app.route('/leaderboard')
+@login_required # Or remove @login_required if leaderboard should be public (after gatekeeper)
+def leaderboard():
+    if not current_user.is_authenticated and not session.get('has_passed_gate'):
+        return redirect(url_for('access_page')) # Protect leaderboard if not logged in
+        
+    users = User.query.order_by(User.wins.desc(), User.losses.asc()).all()
+    return render_template('leaderboard.html', users=users)
 
 def create_tables():
     with app.app_context():

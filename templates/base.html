@@ -74,6 +74,7 @@
                 <li><a href="{{ url_for('index') }}">Home</a></li>
                 {% if current_user.is_authenticated %}
                     <li><a href="{{ url_for('create_bet') }}">Create Bet</a></li>
+                    <li><a href="{{ url_for('leaderboard') }}">Leaderboard</a></li>
                     <li><a href="{{ url_for('logout') }}">Logout ({{ current_user.name }})</a></li>
                 {% else %}
                     <li><a href="{{ url_for('login') }}">Login</a></li>

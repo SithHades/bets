@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}Leaderboard{% endblock %}
+
+{% block content %}
+    <h2>Leaderboard</h2>
+    <p>Users ranked by most bets won.</p>
+    
+    {% if users %}
+        <table class="table table-striped table-hover">
+            <thead>
+                <tr>
+                    <th scope="col">Rank</th>
+                    <th scope="col">User</th>
+                    <th scope="col">Wins</th>
+                    <th scope="col">Losses</th>
+                    <th scope="col">Win Ratio</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                    <tr>
+                        <th scope="row">{{ loop.index }}</th>
+                        <td>{{ user.name }}</td>
+                        <td>{{ user.wins }}</td>
+                        <td>{{ user.losses }}</td>
+                        <td>
+                            {% if user.wins + user.losses > 0 %}
+                                {{ "%.2f"|format(user.wins / (user.wins + user.losses) * 100) }}%
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No user data available for the leaderboard yet.</p>
+    {% endif %}
+{% endblock %} 
