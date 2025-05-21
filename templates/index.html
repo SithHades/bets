@@ -28,26 +28,25 @@
         {% if active_bets %}
             <div class="accordion" id="activeBetsAccordion">
                 {% for item in active_bets %}
+                    {% set unique_id = 'active' ~ item.bet.id %}
                     <div class="accordion-item border-0 mb-3">
-                        <h2 class="accordion-header" id="heading{{ loop.index }}">
-                            <button class="accordion-button collapsed p-0 bg-transparent" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ loop.index }}" aria-expanded="false" aria-controls="collapse{{ loop.index }}">
+                        <h2 class="accordion-header" id="heading{{ unique_id }}">
+                            <button class="accordion-button collapsed p-0 bg-transparent" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ unique_id }}" aria-expanded="false" aria-controls="collapse{{ unique_id }}">
                                 <div class="card w-100">
                                     <div class="card-header d-flex justify-content-between align-items-center">
                                         <h3 class="h5 mb-0">
                                             {{ item.bet.title }}
                                             <span class="badge bg-success-soft text-success ms-2">Active</span>
                                         </h3>
-                                        <div class="d-flex align-items-center">
-                                            <span class="text-muted small me-3">
-                                                <i class="bi bi-people-fill me-1"></i> {{ item.total_bets_on_this_bet }}
-                                            </span>
-                                            <i class="bi bi-chevron-down accordion-arrow"></i>
-                                        </div>
+                                        <span class="text-muted small me-3">
+                                            <i class="bi bi-people-fill me-1"></i> {{ item.total_bets_on_this_bet }}
+                                        </span>
+                                        <i class="bi bi-chevron-down accordion-arrow"></i>
                                     </div>
                                 </div>
                             </button>
                         </h2>
-                        <div id="collapse{{ loop.index }}" class="accordion-collapse collapse" aria-labelledby="heading{{ loop.index }}" data-bs-parent="#activeBetsAccordion">
+                        <div id="collapse{{ unique_id }}" class="accordion-collapse collapse" aria-labelledby="heading{{ unique_id }}" data-bs-parent="#activeBetsAccordion">
                             <div class="accordion-body p-0">
                                 <div class="card">
                                     <div class="card-body">
@@ -183,26 +182,25 @@
         {% if resolved_bets %}
             <div class="accordion" id="resolvedBetsAccordion">
                 {% for item in resolved_bets %}
+                    {% set unique_id = 'resolved' ~ item.bet.id %}
                     <div class="accordion-item border-0 mb-3">
-                        <h2 class="accordion-header" id="resolvedHeading{{ loop.index }}">
-                            <button class="accordion-button collapsed p-0 bg-transparent" type="button" data-bs-toggle="collapse" data-bs-target="#resolvedCollapse{{ loop.index }}" aria-expanded="false" aria-controls="resolvedCollapse{{ loop.index }}">
+                        <h2 class="accordion-header" id="resolvedHeading{{ unique_id }}">
+                            <button class="accordion-button collapsed p-0 bg-transparent" type="button" data-bs-toggle="collapse" data-bs-target="#resolvedCollapse{{ unique_id }}" aria-expanded="false" aria-controls="resolvedCollapse{{ unique_id }}">
                                 <div class="card w-100">
                                     <div class="card-header d-flex justify-content-between align-items-center">
                                         <h3 class="h5 mb-0">
                                             {{ item.bet.title }}
                                             <span class="badge bg-secondary-soft text-secondary">Resolved</span>
                                         </h3>
-                                        <div class="d-flex align-items-center">
-                                            <span class="text-success fw-bold me-3">
-                                                <i class="bi bi-trophy-fill me-1"></i> {{ item.bet.winning_outcome }}
-                                            </span>
-                                            <i class="bi bi-chevron-down accordion-arrow"></i>
-                                        </div>
+                                        <span class="text-success fw-bold me-3">
+                                            <i class="bi bi-trophy-fill me-1"></i> {{ item.bet.winning_outcome }}
+                                        </span>
+                                        <i class="bi bi-chevron-down accordion-arrow"></i>
                                     </div>
                                 </div>
                             </button>
                         </h2>
-                        <div id="resolvedCollapse{{ loop.index }}" class="accordion-collapse collapse" aria-labelledby="resolvedHeading{{ loop.index }}" data-bs-parent="#resolvedBetsAccordion">
+                        <div id="resolvedCollapse{{ unique_id }}" class="accordion-collapse collapse" aria-labelledby="resolvedHeading{{ unique_id }}" data-bs-parent="#resolvedBetsAccordion">
                             <div class="accordion-body p-0">
                                 <div class="card">
                                     <div class="card-body">
@@ -361,4 +359,4 @@
         box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.1);
     }
 </style>
-{% endblock %} 
+{% endblock %}
