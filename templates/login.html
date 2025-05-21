@@ -3,9 +3,9 @@
 {% block title %}Sign In | BetFlow{% endblock %}
 
 {% block content %}
-<div class="container">
+<div class="container login-container">
     <div class="row justify-content-center">
-        <div class="col-md-8 col-lg-6">
+        <div class="col-md-12 col-lg-10 col-xl-8">
             <div class="card shadow-sm">
                 <div class="card-body p-5">
                     <div class="text-center mb-5">
@@ -70,22 +70,6 @@
                             </p>
                         </div>
                     </form>
-
-                    <div class="position-relative my-4">
-                        <hr>
-                        <div class="position-absolute top-50 start-50 translate-middle bg-white px-3">
-                            <span class="text-muted small">Or continue with</span>
-                        </div>
-                    </div>
-
-                    <div class="d-grid gap-2">
-                        <a href="#" class="btn btn-outline-secondary btn-lg">
-                            <i class="bi bi-google me-2"></i> Continue with Google
-                        </a>
-                        <a href="#" class="btn btn-outline-secondary btn-lg">
-                            <i class="bi bi-github me-2"></i> Continue with GitHub
-                        </a>
-                    </div>
                 </div>
             </div>
         </div>
@@ -93,12 +77,25 @@
 </div>
 
 <style>
-    body {
-        background-color: #f8fafc;
+    .login-container {
+        min-height: calc(100vh - 120px);
         display: flex;
         align-items: center;
-        min-height: 100vh;
-        padding: 2rem 0;
+        justify-content: center;
+        padding: 2rem 1rem;
+        margin: 0 auto;
+        width: 100%;
+    }
+    
+    @media (min-width: 1200px) {
+        .login-container {
+            max-width: 1140px;
+        }
+    }
+    
+    .card {
+        max-width: 100%;
+        margin: 0 auto;
     }
     
     .card {
