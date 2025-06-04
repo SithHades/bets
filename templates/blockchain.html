@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block title %}Blockchain Explorer{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>🔗 Blockchain Explorer</h2>
+                <div class="d-flex gap-3">
+                    <span class="badge bg-{{ 'success' if chain_valid else 'danger' }} fs-6">
+                        Chain Status: {{ 'Valid' if chain_valid else 'Invalid' }}
+                    </span>
+                    <span class="badge bg-primary fs-6">
+                        Total Blocks: {{ total_blocks }}
+                    </span>
+                </div>
+            </div>
+
+            {% if not block_data %}
+                <div class="alert alert-info">
+                    <h4>No blocks found</h4>
+                    <p>The blockchain is empty. Blocks will appear here when users register, create bets, place bets, or resolve bets.</p>
+                </div>
+            {% else %}
+                <div class="row">
+                    {% for block_info in block_data %}
+                    <div class="col-12 mb-4">
+                        <div class="card">
+                            <div class="card-header bg-primary text-white">
+                                <div class="row align-items-center">
+                                    <div class="col-md-6">
+                                        <h5 class="mb-0">Block #{{ block_info.block.index }}</h5>
+                                        <small>{{ block_info.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</small>
+                                    </div>
+                                    <div class="col-md-6 text-md-end">
+                                        <span class="badge bg-light text-dark">
+                                            {{ block_info.transaction_count }} transaction{{ 's' if block_info.transaction_count != 1 else '' }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <strong>Hash:</strong><br>
+                                        <code class="text-break">{{ block_info.block.hash }}</code>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <strong>Previous Hash:</strong><br>
+                                        <code class="text-break">{{ block_info.block.previous_hash }}</code>
+                                    </div>
+                                </div>
+                                <div class="row mb-3">
+                                    <div class="col-md-4">
+                                        <strong>Nonce:</strong> {{ block_info.block.nonce }}
+                                    </div>
+                                    <div class="col-md-8">
+                                        <strong>Merkle Root:</strong><br>
+                                        <code class="text-break">{{ block_info.block.merkle_root }}</code>
+                                    </div>
+                                </div>
+
+                                {% if block_info.transactions %}
+                                <h6 class="border-bottom pb-2 mb-3">Transactions</h6>
+                                <div class="accordion" id="accordion-block-{{ block_info.block.index }}">
+                                    {% for tx in block_info.transactions %}
+                                    <div class="accordion-item">
+                                        <h2 class="accordion-header" id="heading-{{ block_info.block.index }}-{{ loop.index }}">
+                                            <button class="accordion-button collapsed" type="button" 
+                                                    data-bs-toggle="collapse" 
+                                                    data-bs-target="#collapse-{{ block_info.block.index }}-{{ loop.index }}"
+                                                    aria-expanded="false" 
+                                                    aria-controls="collapse-{{ block_info.block.index }}-{{ loop.index }}">
+                                                <div class="d-flex justify-content-between w-100 me-3">
+                                                    <span>
+                                                        {% if tx.type == 'user_registration' %}
+                                                            👤 User Registration
+                                                        {% elif tx.type == 'bet_creation' %}
+                                                            🎯 Bet Creation
+                                                        {% elif tx.type == 'bet_placement' %}
+                                                            💰 Bet Placement
+                                                        {% elif tx.type == 'bet_resolution' %}
+                                                            ✅ Bet Resolution
+                                                        {% else %}
+                                                            📝 {{ tx.type.replace('_', ' ').title() }}
+                                                        {% endif %}
+                                                    </span>
+                                                    <small class="text-muted">{{ tx.timestamp.strftime('%H:%M:%S') }}</small>
+                                                </div>
+                                            </button>
+                                        </h2>
+                                        <div id="collapse-{{ block_info.block.index }}-{{ loop.index }}" 
+                                             class="accordion-collapse collapse" 
+                                             aria-labelledby="heading-{{ block_info.block.index }}-{{ loop.index }}"
+                                             data-bs-parent="#accordion-block-{{ block_info.block.index }}">
+                                            <div class="accordion-body">
+                                                <div class="row mb-2">
+                                                    <div class="col-12">
+                                                        <strong>Transaction Hash:</strong><br>
+                                                        <code class="text-break">{{ tx.hash }}</code>
+                                                    </div>
+                                                </div>
+                                                <div class="row mb-2">
+                                                    <div class="col-md-6">
+                                                        {% if tx.user_id %}
+                                                        <strong>User ID:</strong> {{ tx.user_id }}
+                                                        {% endif %}
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        {% if tx.bet_id %}
+                                                        <strong>Bet ID:</strong> {{ tx.bet_id }}
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                                <div class="row">
+                                                    <div class="col-12">
+                                                        <strong>Transaction Data:</strong>
+                                                        <pre class="bg-light p-2 mt-1 rounded"><code>{{ tx.data | tojson(indent=2) }}</code></pre>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <div class="mt-4 text-center">
+                <a href="/api/blockchain" class="btn btn-outline-primary" target="_blank">
+                    📥 Download Raw Blockchain Data (JSON)
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
