@@ -17,22 +17,71 @@
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h2 class="h4">
                 <i class="bi bi-lightning-charge-fill text-warning me-2"></i>Active Bets
-                <span class="badge bg-primary-soft text-primary ms-2">
+                <span class="badge bg-primary-soft text-primary ms-2" id="activeBetsCount">
                     {{ bet_data|selectattr("bet.resolved", "equalto", false)|list|length }}
                 </span>
             </h2>
         </div>
 
+        {% if current_user.is_authenticated %}
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card bg-light border-0">
+                    <div class="card-body py-3">
+                        <div class="d-flex align-items-center gap-3">
+                            <i class="bi bi-funnel text-primary"></i>
+                            <div class="flex-grow-1">
+                                <label class="form-label mb-1 small fw-medium">Filter Active Bets</label>
+                                <select id="betFilter" class="form-select form-select-sm">
+                                    <option value="all">All active bets</option>
+                                    <option value="not-bet">Bets I haven't joined</option>
+                                    <option value="my-bets">My bets</option>
+                                    <option value="can-resolve">Bets I can resolve</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
         {% set active_bets = bet_data|selectattr("bet.resolved", "equalto", false)|list %}
         {% if active_bets %}
-            <div class="row">
+            <div class="row" id="activeBetsContainer">
                 {% for item in active_bets %}
-                <div class="col-lg-6 mb-4">
+                {% set user_has_bet = false %}
+                {% set user_bet_outcome = none %}
+                {% set is_user_creator = current_user.is_authenticated and current_user.id == item.bet.creator_id %}
+                {% set can_resolve = is_user_creator and not item.bet.resolved %}
+                {% if current_user.is_authenticated %}
+                    {% set current_user_bet = item.bet.user_bets.filter_by(user_id=current_user.id).first() %}
+                    {% if current_user_bet %}
+                        {% set user_has_bet = true %}
+                        {% set user_bet_outcome = current_user_bet.chosen_outcome %}
+                    {% endif %}
+                {% endif %}
+                
+                <!-- Debug: user_has_bet={{ user_has_bet }}, user_bet_outcome={{ user_bet_outcome }}, is_user_creator={{ is_user_creator }} -->
+                <div class="col-lg-6 mb-4 bet-card" 
+                     data-has-user-bet="{{ user_has_bet|lower }}"
+                     data-is-creator="{{ is_user_creator|lower }}"
+                     data-can-resolve="{{ can_resolve|lower }}">
                     <div class="card h-100">
                         <div class="card-header d-flex justify-content-between align-items-center">
                             <h3 class="h6 mb-0">
                                 {{ item.bet.title }}
                                 <span class="badge bg-success-soft text-success ms-2">Active</span>
+                                {% if user_has_bet %}
+                                <span class="badge bg-info ms-1" data-bs-toggle="tooltip" title="You bet: {{ user_bet_outcome }}">
+                                    <i class="bi bi-person-check"></i>
+                                </span>
+                                {% endif %}
+                                {% if is_user_creator %}
+                                <span class="badge bg-warning text-dark ms-1" data-bs-toggle="tooltip" title="Your bet">
+                                    <i class="bi bi-star-fill"></i>
+                                </span>
+                                {% endif %}
                             </h3>
                             <span class="text-muted small">
                                 <i class="bi bi-people-fill me-1"></i> {{ item.total_bets_on_this_bet }}
@@ -188,5 +237,115 @@
         transform: translateY(-2px);
         box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.1);
     }
+    
+    .bet-card {
+        transition: all 0.3s ease;
+    }
+    
+    .bet-card.hidden {
+        display: none !important;
+    }
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    });
+    
+    const betFilter = document.getElementById('betFilter');
+    const activeBetsContainer = document.getElementById('activeBetsContainer');
+    const activeBetsCount = document.getElementById('activeBetsCount');
+    
+    if (!betFilter) return; // Exit if user not authenticated
+    
+    function updateBetsCount() {
+        const visibleCards = activeBetsContainer.querySelectorAll('.bet-card:not(.hidden)');
+        activeBetsCount.textContent = visibleCards.length;
+    }
+    
+    function filterBets() {
+        const filterValue = betFilter.value;
+        const betCards = activeBetsContainer.querySelectorAll('.bet-card');
+        
+        // Debug: log the filter value and first card's data attributes
+        console.log('Filter value:', filterValue);
+        if (betCards.length > 0) {
+            console.log('First card data attributes:', {
+                hasUserBet: betCards[0].dataset.hasUserBet,
+                isCreator: betCards[0].dataset.isCreator,
+                canResolve: betCards[0].dataset.canResolve
+            });
+        }
+        
+        betCards.forEach(card => {
+            let shouldShow = true;
+            
+            switch(filterValue) {
+                case 'all':
+                    shouldShow = true;
+                    break;
+                    
+                case 'not-bet':
+                    shouldShow = card.dataset.hasUserBet === 'false';
+                    break;
+                    
+                case 'my-bets':
+                    shouldShow = card.dataset.hasUserBet === 'true';
+                    break;
+                    
+                case 'can-resolve':
+                    shouldShow = card.dataset.canResolve === 'true';
+                    break;
+            }
+            
+            console.log('Card data:', {
+                hasUserBet: card.dataset.hasUserBet,
+                shouldShow: shouldShow,
+                filterValue: filterValue
+            });
+            
+            if (shouldShow) {
+                card.classList.remove('hidden');
+            } else {
+                card.classList.add('hidden');
+            }
+        });
+        
+        updateBetsCount();
+        
+        // Show/hide empty state
+        const visibleCards = activeBetsContainer.querySelectorAll('.bet-card:not(.hidden)');
+        const emptyState = document.querySelector('.text-center.py-5');
+        
+        if (visibleCards.length === 0 && filterValue !== 'all') {
+            if (!document.getElementById('filterEmptyState')) {
+                const emptyDiv = document.createElement('div');
+                emptyDiv.id = 'filterEmptyState';
+                emptyDiv.className = 'col-12';
+                emptyDiv.innerHTML = `
+                    <div class="text-center py-5 bg-light rounded-3">
+                        <i class="bi bi-funnel display-4 text-muted mb-3"></i>
+                        <h3 class="h5 mb-2">No bets match your filter</h3>
+                        <p class="text-muted">Try selecting a different filter option.</p>
+                    </div>
+                `;
+                activeBetsContainer.appendChild(emptyDiv);
+            }
+        } else {
+            const filterEmptyState = document.getElementById('filterEmptyState');
+            if (filterEmptyState) {
+                filterEmptyState.remove();
+            }
+        }
+    }
+    
+    betFilter.addEventListener('change', filterBets);
+    
+    // Initialize count
+    updateBetsCount();
+});
+</script>
 {% endblock %}
