@@ -8,7 +8,7 @@
         <!-- Back to bets link -->
         <nav aria-label="breadcrumb" class="mb-4">
             <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="{{ url_for('index') }}" class="text-decoration-none">All Bets</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}" class="text-decoration-none">All Bets</a></li>
                 <li class="breadcrumb-item active" aria-current="page">{{ bet.title }}</li>
             </ol>
         </nav>
@@ -103,7 +103,7 @@
                 {% if can_bet %}
                 <div class="mt-4 p-3 bg-light rounded">
                     <h6 class="mb-3">Place Your Bet</h6>
-                    <form method="POST" action="{{ url_for('place_bet', bet_id=bet.id) }}">
+                    <form method="POST" action="{{ url_for('bets.place_bet', bet_id=bet.id) }}">
                         <div class="row g-2">
                             <div class="col-md-8">
                                 <select name="chosen_outcome" class="form-select" required>
@@ -129,7 +129,7 @@
                     <h6 class="mb-3 text-warning">
                         <i class="bi bi-exclamation-triangle me-1"></i>Resolve This Bet
                     </h6>
-                    <form method="POST" action="{{ url_for('resolve_bet', bet_id=bet.id) }}" 
+                    <form method="POST" action="{{ url_for('bets.resolve_bet', bet_id=bet.id) }}" 
                           onsubmit="return confirm('Are you sure you want to resolve this bet? This action cannot be undone.')">
                         <div class="row g-2">
                             <div class="col-md-8">

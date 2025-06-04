@@ -21,12 +21,12 @@ BetFlow is a Flask-based betting platform where users can create, participate in
 ### Database Operations
 ```bash
 # Initialize database (creates tables)
-flask init-db
+.venv/bin/flask init-db
 
 # Run the application
-python app.py
+.venv/bin/python app.py
 # or
-flask run
+.venv/bin/flask run
 ```
 
 ## Key Features

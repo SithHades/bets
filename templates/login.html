@@ -16,7 +16,7 @@
                         <p class="text-muted">Sign in to your BetFlow account</p>
                     </div>
 
-                    <form method="POST" action="{{ url_for('login') }}" class="needs-validation" novalidate>
+                    <form method="POST" action="{{ url_for('auth.login') }}" class="needs-validation" novalidate>
                         <div class="mb-4">
                             <label for="email" class="form-label fw-medium">Email address</label>
                             <div class="input-group">
@@ -64,7 +64,7 @@
 
                         <div class="text-center mt-4">
                             <p class="text-muted mb-0">Don't have an account? 
-                                <a href="{{ url_for('register') }}" class="text-primary text-decoration-none fw-medium">
+                                <a href="{{ url_for('auth.register') }}" class="text-primary text-decoration-none fw-medium">
                                     Create an account
                                 </a>
                             </p>

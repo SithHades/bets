@@ -7,7 +7,7 @@
         <div class="col-md-6">
             <h2>Site Access</h2>
             <p>This site requires an access password to view content if you are not logged in.</p>
-            <form method="POST" action="{{ url_for('access_page') }}">
+            <form method="POST" action="{{ url_for('auth.access_page') }}">
                 <div class="mb-3">
                     <label for="access_password" class="form-label">Site Access Password</label>
                     <input type="password" class="form-control" id="access_password" name="access_password" required>
