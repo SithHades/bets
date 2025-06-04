@@ -16,7 +16,8 @@ else
     # Check if blockchain migration is needed
     echo "Checking blockchain migration status..."
     python -c "
-from app import app, Block, Transaction
+from app import app
+from models import Block, Transaction
 import sqlalchemy
 with app.app_context():
     try:
