@@ -1,0 +1,256 @@
+{% extends "base.html" %}
+
+{% block title %}{{ bet.title }} - BetFlow{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <!-- Back to bets link -->
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('index') }}" class="text-decoration-none">All Bets</a></li>
+                <li class="breadcrumb-item active" aria-current="page">{{ bet.title }}</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Main bet details -->
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-start">
+                <div>
+                    <h2 class="mb-1">{{ bet.title }}</h2>
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        {% if bet.resolved %}
+                            <span class="badge bg-success">
+                                <i class="bi bi-check-circle me-1"></i>Resolved
+                            </span>
+                            <span class="text-muted">Winner: <strong>{{ bet.winning_outcome }}</strong></span>
+                        {% elif is_expired %}
+                            <span class="badge bg-secondary">
+                                <i class="bi bi-clock me-1"></i>Expired
+                            </span>
+                        {% elif time_remaining %}
+                            <span class="badge bg-warning text-dark">
+                                <i class="bi bi-hourglass-split me-1"></i>
+                                {% if time_remaining.days > 0 %}
+                                    {{ time_remaining.days }}d {{ time_remaining.seconds // 3600 }}h remaining
+                                {% elif time_remaining.seconds > 3600 %}
+                                    {{ time_remaining.seconds // 3600 }}h {{ (time_remaining.seconds % 3600) // 60 }}m remaining
+                                {% else %}
+                                    {{ time_remaining.seconds // 60 }}m remaining
+                                {% endif %}
+                            </span>
+                        {% endif %}
+                        
+                        {% if user_bet %}
+                            <span class="badge bg-info">
+                                <i class="bi bi-person-check me-1"></i>You bet: {{ user_bet.chosen_outcome }}
+                            </span>
+                        {% endif %}
+                    </div>
+                    <small class="text-muted">Created by {{ bet.creator.name }} • Expires {{ bet.expiration_date.strftime('%B %d, %Y at %I:%M %p') }}</small>
+                </div>
+                
+                <!-- Share button -->
+                <button class="btn btn-outline-secondary btn-sm" onclick="copyShareLink()" title="Copy share link">
+                    <i class="bi bi-share"></i>
+                </button>
+            </div>
+            
+            {% if bet.description %}
+            <div class="card-body border-bottom">
+                <h6 class="text-muted mb-2">Description</h6>
+                <p class="mb-0">{{ bet.description }}</p>
+            </div>
+            {% endif %}
+            
+            <div class="card-body">
+                <h6 class="text-muted mb-3">Outcomes & Results</h6>
+                
+                {% for outcome in bet.get_outcomes_list() %}
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="mb-0">{{ outcome }}</h6>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge bg-light text-dark">{{ outcome_counts[outcome] }} bet{{ 's' if outcome_counts[outcome] != 1 else '' }}</span>
+                            <span class="fw-bold">{{ "%.1f"|format(outcome_percentages[outcome]) }}%</span>
+                        </div>
+                    </div>
+                    
+                    <div class="progress mb-2" style="height: 8px;">
+                        <div class="progress-bar 
+                            {% if bet.resolved and bet.winning_outcome == outcome %}bg-success
+                            {% elif bet.resolved %}bg-danger
+                            {% else %}bg-primary{% endif %}" 
+                            style="width: {{ outcome_percentages[outcome] }}%">
+                        </div>
+                    </div>
+                    
+                    {% if users_by_outcome[outcome] %}
+                    <div class="d-flex flex-wrap gap-1">
+                        {% for user in users_by_outcome[outcome] %}
+                        <span class="badge bg-light text-dark">{{ user.name }}</span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+                
+                <!-- Betting form -->
+                {% if can_bet %}
+                <div class="mt-4 p-3 bg-light rounded">
+                    <h6 class="mb-3">Place Your Bet</h6>
+                    <form method="POST" action="{{ url_for('place_bet', bet_id=bet.id) }}">
+                        <div class="row g-2">
+                            <div class="col-md-8">
+                                <select name="chosen_outcome" class="form-select" required>
+                                    <option value="">Choose an outcome...</option>
+                                    {% for outcome in bet.get_outcomes_list() %}
+                                    <option value="{{ outcome }}">{{ outcome }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="bi bi-plus-circle me-1"></i>Place Bet
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                {% endif %}
+                
+                <!-- Resolution form for bet creator -->
+                {% if can_resolve %}
+                <div class="mt-4 p-3 bg-warning bg-opacity-10 border border-warning rounded">
+                    <h6 class="mb-3 text-warning">
+                        <i class="bi bi-exclamation-triangle me-1"></i>Resolve This Bet
+                    </h6>
+                    <form method="POST" action="{{ url_for('resolve_bet', bet_id=bet.id) }}" 
+                          onsubmit="return confirm('Are you sure you want to resolve this bet? This action cannot be undone.')">
+                        <div class="row g-2">
+                            <div class="col-md-8">
+                                <select name="winning_outcome" class="form-select" required>
+                                    <option value="">Select the winning outcome...</option>
+                                    {% for outcome in bet.get_outcomes_list() %}
+                                    <option value="{{ outcome }}">{{ outcome }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <button type="submit" class="btn btn-warning w-100">
+                                    <i class="bi bi-check-circle me-1"></i>Resolve Bet
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Sidebar with stats -->
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="bi bi-graph-up me-1"></i>Statistics
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6">
+                        <div class="border-end">
+                            <div class="h4 mb-0 text-primary">{{ total_bets }}</div>
+                            <small class="text-muted">Total Bets</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="h4 mb-0 text-success">{{ bet.get_outcomes_list()|length }}</div>
+                        <small class="text-muted">Outcomes</small>
+                    </div>
+                </div>
+                
+                {% if total_bets > 0 %}
+                <hr>
+                <h6 class="text-muted mb-3">Most Popular</h6>
+                {% set most_popular = outcome_counts.items() | sort(attribute=1, reverse=true) | first %}
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span>{{ most_popular[0] }}</span>
+                    <span class="fw-bold text-primary">{{ "%.1f"|format(outcome_percentages[most_popular[0]]) }}%</span>
+                </div>
+                <div class="progress mb-3">
+                    <div class="progress-bar bg-primary" style="width: {{ outcome_percentages[most_popular[0]] }}%"></div>
+                </div>
+                {% endif %}
+                
+                <hr>
+                <div class="small text-muted">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>Created:</span>
+                        <span>{{ bet.expiration_date.strftime('%b %d, %Y') }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span>Status:</span>
+                        <span>
+                            {% if bet.resolved %}Resolved
+                            {% elif is_expired %}Expired
+                            {% else %}Active{% endif %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        {% if users_by_outcome %}
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="bi bi-people me-1"></i>Participants
+                </h6>
+            </div>
+            <div class="card-body">
+                {% for outcome, users in users_by_outcome.items() %}
+                    {% if users %}
+                    <div class="mb-3">
+                        <div class="small text-muted mb-1">{{ outcome }}</div>
+                        <div class="d-flex flex-wrap gap-1">
+                            {% for user in users %}
+                            <span class="badge bg-light text-dark small">{{ user.name }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function copyShareLink() {
+    const url = window.location.href;
+    navigator.clipboard.writeText(url).then(function() {
+        // Create a temporary success message
+        const btn = event.target.closest('button');
+        const original = btn.innerHTML;
+        btn.innerHTML = '<i class="bi bi-check"></i>';
+        btn.classList.remove('btn-outline-secondary');
+        btn.classList.add('btn-success');
+        
+        setTimeout(() => {
+            btn.innerHTML = original;
+            btn.classList.remove('btn-success');
+            btn.classList.add('btn-outline-secondary');
+        }, 2000);
+    }).catch(function() {
+        alert('Could not copy link. Please copy the URL manually.');
+    });
+}
+</script>
+{% endblock %}

@@ -250,7 +250,7 @@ def place_bet(bet_id):
     db.session.add(new_user_bet)
     db.session.commit()
     flash(f'You have successfully bet on "{chosen_outcome}"!', 'success')
-    return redirect(url_for('index'))
+    return redirect(url_for('bet_details', bet_id=bet_id))
 
 
 @app.route('/resolve_bet/<int:bet_id>', methods=['POST'])
@@ -283,7 +283,65 @@ def resolve_bet(bet_id):
 
     db.session.commit()
     flash(f'Bet "{bet.title}" resolved. Winning outcome: {winning_outcome}', 'success')
-    return redirect(url_for('index'))
+    return redirect(url_for('bet_details', bet_id=bet_id))
+
+@app.route('/bet/<int:bet_id>')
+def bet_details(bet_id):
+    if not current_user.is_authenticated and not session.get('has_passed_gate'):
+        return redirect(url_for('access_page'))
+    
+    bet = Bet.query.get_or_404(bet_id)
+    
+    # Calculate detailed statistics
+    user_bets_on_this = UserBet.query.filter_by(bet_id=bet_id).all()
+    outcome_counts = {outcome: 0 for outcome in bet.get_outcomes_list()}
+    total_bets_on_this_bet = len(user_bets_on_this)
+    users_by_outcome = {outcome: [] for outcome in bet.get_outcomes_list()}
+    
+    for user_bet in user_bets_on_this:
+        if user_bet.chosen_outcome in outcome_counts:
+            outcome_counts[user_bet.chosen_outcome] += 1
+        user = User.query.get(user_bet.user_id)
+        if user and user_bet.chosen_outcome in users_by_outcome:
+            users_by_outcome[user_bet.chosen_outcome].append(user)
+    
+    outcome_percentages = {}
+    if total_bets_on_this_bet > 0:
+        for outcome, count in outcome_counts.items():
+            outcome_percentages[outcome] = (count / total_bets_on_this_bet) * 100
+    else:
+        for outcome in bet.get_outcomes_list():
+            outcome_percentages[outcome] = 0
+    
+    # Check if current user has placed a bet
+    user_bet = None
+    if current_user.is_authenticated:
+        user_bet = UserBet.query.filter_by(user_id=current_user.id, bet_id=bet_id).first()
+    
+    # Calculate time remaining
+    time_remaining = None
+    if not bet.resolved and bet.expiration_date > datetime.datetime.now():
+        time_remaining = bet.expiration_date - datetime.datetime.now()
+    
+    bet_data = {
+        'bet': bet,
+        'outcome_counts': outcome_counts,
+        'outcome_percentages': outcome_percentages,
+        'users_by_outcome': users_by_outcome,
+        'total_bets': total_bets_on_this_bet,
+        'user_bet': user_bet,
+        'time_remaining': time_remaining,
+        'is_expired': datetime.datetime.now() > bet.expiration_date,
+        'can_bet': (current_user.is_authenticated and 
+                   not bet.resolved and 
+                   datetime.datetime.now() <= bet.expiration_date and
+                   not user_bet),
+        'can_resolve': (current_user.is_authenticated and 
+                       current_user.id == bet.creator_id and 
+                       not bet.resolved)
+    }
+    
+    return render_template('bet_details.html', **bet_data)
 
 @app.route('/leaderboard')
 @login_required # Or remove @login_required if leaderboard should be public (after gatekeeper)
