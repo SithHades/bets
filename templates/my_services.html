@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}My Services{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>My Services</h2>
+    <a href="{{ url_for('services.create_service') }}" class="btn btn-primary">Offer New Service</a>
+</div>
+
+{% if services %}
+    <div class="row">
+        {% for service in services %}
+        <div class="col-md-6 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <h5 class="card-title">{{ service.title }}</h5>
+                        <span class="badge bg-{{ 'success' if service.status == 'available' else 'warning' if service.status == 'pending' else 'secondary' }}">
+                            {{ service.status.title() }}
+                        </span>
+                    </div>
+                    
+                    {% if service.description %}
+                        <p class="card-text">{{ service.description }}</p>
+                    {% endif %}
+                    
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="badge bg-primary fs-6">{{ service.block_cost }} blocks</span>
+                        <small class="text-muted">{{ service.created_at.strftime('%B %d, %Y') }}</small>
+                    </div>
+                    
+                    {% if service.status == 'pending' %}
+                        <div class="mt-3">
+                            {% set transaction = service.transactions.filter_by(status='pending').first() %}
+                            {% if transaction %}
+                                <div class="alert alert-info py-2">
+                                    <small>
+                                        <strong>Purchased by:</strong> {{ transaction.buyer.name }}<br>
+                                        <strong>On:</strong> {{ transaction.created_at.strftime('%B %d, %Y at %I:%M %p') }}
+                                    </small>
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% elif service.status == 'completed' %}
+                        <div class="mt-3">
+                            {% set transaction = service.transactions.filter_by(status='completed').first() %}
+                            {% if transaction %}
+                                <div class="alert alert-success py-2">
+                                    <small>
+                                        <strong>Completed for:</strong> {{ transaction.buyer.name }}<br>
+                                        <strong>Earned:</strong> {{ transaction.blocks_spent }} blocks<br>
+                                        <strong>On:</strong> {{ transaction.completed_at.strftime('%B %d, %Y at %I:%M %p') }}
+                                    </small>
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="alert alert-info">
+        <h5>No services yet</h5>
+        <p>You haven't offered any services yet. <a href="{{ url_for('services.create_service') }}">Create your first service</a> to start earning blocks!</p>
+    </div>
+{% endif %}
+
+<div class="mt-4">
+    <a href="{{ url_for('services.marketplace') }}" class="btn btn-outline-primary">
+        ← Back to Marketplace
+    </a>
+    <a href="{{ url_for('services.my_transactions') }}" class="btn btn-outline-secondary">
+        View My Transactions
+    </a>
+</div>
+{% endblock %}

@@ -113,20 +113,36 @@ def resolve_bet(bet_id):
     bet.resolved = True
     bet.winning_outcome = winning_outcome
 
-    # Update win/loss records for participants
+    # Update win/loss records and award blocks to winners
     winners = []
     losers = []
+    total_participants = bet.user_bets.count()
+    blocks_per_winner = max(1, total_participants // 2)  # Award more blocks for more competitive bets
+    
     for user_bet_record in bet.user_bets:
         user = User.query.get(user_bet_record.user_id)
         if user:
             if user_bet_record.chosen_outcome == winning_outcome:
                 user.wins = (user.wins or 0) + 1
-                winners.append({'user_id': user.id, 'name': user.name, 'chosen_outcome': user_bet_record.chosen_outcome})
+                user.block_balance = (user.block_balance or 0) + blocks_per_winner
+                winners.append({'user_id': user.id, 'name': user.name, 'chosen_outcome': user_bet_record.chosen_outcome, 'blocks_earned': blocks_per_winner})
             else:
                 user.losses = (user.losses or 0) + 1
                 losers.append({'user_id': user.id, 'name': user.name, 'chosen_outcome': user_bet_record.chosen_outcome})
 
     db.session.commit()
+    
+    # Add blockchain transactions for block rewards
+    for winner in winners:
+        reward_data = {
+            'bet_id': bet_id,
+            'bet_title': bet.title,
+            'winner_id': winner['user_id'],
+            'blocks_awarded': winner['blocks_earned'],
+            'total_participants': total_participants,
+            'reward_time': datetime.datetime.now().isoformat()
+        }
+        Blockchain.add_transaction('block_reward', user_id=winner['user_id'], bet_id=bet_id, data=reward_data)
     
     # Add blockchain transaction for bet resolution
     resolution_data = {

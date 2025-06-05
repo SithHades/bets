@@ -13,6 +13,7 @@ class User(UserMixin, db.Model):
     created_bets = db.relationship('Bet', backref='creator', lazy='dynamic')
     wins = db.Column(db.Integer, default=0, nullable=False)
     losses = db.Column(db.Integer, default=0, nullable=False)
+    block_balance = db.Column(db.Integer, default=0, nullable=False)
 
     def set_password(self, password):
         self.password_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
@@ -86,3 +87,24 @@ class Transaction(db.Model):
             self.timestamp = time.time()
         if not self.hash:
             self.hash = self.calculate_hash()
+
+class Service(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    block_cost = db.Column(db.Integer, nullable=False)
+    provider_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    status = db.Column(db.String(20), default='available', nullable=False)  # 'available', 'pending', 'completed', 'cancelled'
+    created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+    provider = db.relationship('User', backref='services_offered', lazy=True)
+
+class ServiceTransaction(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    service_id = db.Column(db.Integer, db.ForeignKey('service.id'), nullable=False)
+    buyer_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    blocks_spent = db.Column(db.Integer, nullable=False)
+    status = db.Column(db.String(20), default='pending', nullable=False)  # 'pending', 'completed', 'cancelled'
+    created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+    completed_at = db.Column(db.DateTime, nullable=True)
+    service = db.relationship('Service', backref='transactions', lazy=True)
+    buyer = db.relationship('User', backref='service_purchases', lazy=True)

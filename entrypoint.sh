@@ -11,6 +11,8 @@ if [ ! -f "$DB_FILE" ]; then
     flask migrate-to-blockchain
 else
     echo "Database found. Ensuring database schema is up to date..."
+    echo "Running schema migrations..."
+    python migrate_add_block_balance.py
     flask init-db
     
     # Check if blockchain migration is needed

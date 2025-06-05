@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block title %}My Transactions{% endblock %}
+
+{% block content %}
+<h2>My Transactions</h2>
+
+<div class="row">
+    <div class="col-md-6">
+        <h4>Services I've Purchased</h4>
+        {% if purchases %}
+            {% for transaction in purchases %}
+            <div class="card mb-3">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <h6 class="card-title">{{ transaction.service.title }}</h6>
+                        <span class="badge bg-{{ 'warning' if transaction.status == 'pending' else 'success' if transaction.status == 'completed' else 'secondary' }}">
+                            {{ transaction.status.title() }}
+                        </span>
+                    </div>
+                    
+                    <p class="card-text">
+                        <small class="text-muted">
+                            Provider: {{ transaction.service.provider.name }}<br>
+                            Cost: {{ transaction.blocks_spent }} blocks<br>
+                            Purchased: {{ transaction.created_at.strftime('%B %d, %Y at %I:%M %p') }}
+                            {% if transaction.completed_at %}
+                                <br>Completed: {{ transaction.completed_at.strftime('%B %d, %Y at %I:%M %p') }}
+                            {% endif %}
+                        </small>
+                    </p>
+                    
+                    {% if transaction.status == 'pending' %}
+                        <div class="btn-group btn-group-sm" role="group">
+                            <form method="POST" action="{{ url_for('services.complete_service', transaction_id=transaction.id) }}" style="display: inline;">
+                                <button type="submit" class="btn btn-success btn-sm" 
+                                        onclick="return confirm('Mark this service as completed?')">
+                                    Mark Complete
+                                </button>
+                            </form>
+                            <form method="POST" action="{{ url_for('services.cancel_service', transaction_id=transaction.id) }}" style="display: inline;">
+                                <button type="submit" class="btn btn-outline-danger btn-sm" 
+                                        onclick="return confirm('Cancel this transaction? You will get your blocks back.')">
+                                    Cancel
+                                </button>
+                            </form>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="alert alert-info">
+                <p>You haven't purchased any services yet.</p>
+                <a href="{{ url_for('services.marketplace') }}" class="btn btn-primary btn-sm">Browse Services</a>
+            </div>
+        {% endif %}
+    </div>
+    
+    <div class="col-md-6">
+        <h4>Services I've Sold</h4>
+        {% if sales %}
+            {% for transaction in sales %}
+            <div class="card mb-3">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <h6 class="card-title">{{ transaction.service.title }}</h6>
+                        <span class="badge bg-{{ 'warning' if transaction.status == 'pending' else 'success' if transaction.status == 'completed' else 'secondary' }}">
+                            {{ transaction.status.title() }}
+                        </span>
+                    </div>
+                    
+                    <p class="card-text">
+                        <small class="text-muted">
+                            Buyer: {{ transaction.buyer.name }}<br>
+                            Earned: {{ transaction.blocks_spent }} blocks<br>
+                            Sold: {{ transaction.created_at.strftime('%B %d, %Y at %I:%M %p') }}
+                            {% if transaction.completed_at %}
+                                <br>Completed: {{ transaction.completed_at.strftime('%B %d, %Y at %I:%M %p') }}
+                            {% endif %}
+                        </small>
+                    </p>
+                    
+                    {% if transaction.status == 'pending' %}
+                        <div class="btn-group btn-group-sm" role="group">
+                            <form method="POST" action="{{ url_for('services.complete_service', transaction_id=transaction.id) }}" style="display: inline;">
+                                <button type="submit" class="btn btn-success btn-sm" 
+                                        onclick="return confirm('Mark this service as completed? Blocks will be transferred to you.')">
+                                    Mark Complete
+                                </button>
+                            </form>
+                            <form method="POST" action="{{ url_for('services.cancel_service', transaction_id=transaction.id) }}" style="display: inline;">
+                                <button type="submit" class="btn btn-outline-danger btn-sm" 
+                                        onclick="return confirm('Cancel this transaction? Buyer will get their blocks back.')">
+                                    Cancel
+                                </button>
+                            </form>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="alert alert-info">
+                <p>You haven't sold any services yet.</p>
+                <a href="{{ url_for('services.create_service') }}" class="btn btn-primary btn-sm">Offer a Service</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="mt-4">
+    <a href="{{ url_for('services.marketplace') }}" class="btn btn-outline-primary">
+        ← Back to Marketplace
+    </a>
+    <a href="{{ url_for('services.my_services') }}" class="btn btn-outline-secondary">
+        My Services
+    </a>
+</div>
+{% endblock %}

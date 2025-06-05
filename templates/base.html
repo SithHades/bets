@@ -244,6 +244,11 @@
                                 <i class="bi bi-link-45deg me-1"></i> Blockchain
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ 'active' if 'services' in request.endpoint }}" href="{{ url_for('services.marketplace') }}">
+                                <i class="bi bi-shop me-1"></i> Services
+                            </a>
+                        </li>
                     {% endif %}
                 </ul>
                 <div class="d-flex align-items-center">
@@ -254,6 +259,7 @@
                                     {{ current_user.name[0]|upper }}
                                 </div>
                                 <span class="ms-2 d-none d-lg-inline">{{ current_user.name }}</span>
+                                <span class="badge bg-secondary ms-2">{{ current_user.block_balance or 0 }}</span>
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
                                 <li><a class="dropdown-item" href="#" onclick="return showComingSoon()"><i class="bi bi-person me-2"></i>Profile</a></li>

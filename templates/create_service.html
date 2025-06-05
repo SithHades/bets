@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}Create Service{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <h2>Offer a Service</h2>
+        <p class="text-muted">Create a service that friends can purchase with blocks</p>
+        
+        <form method="POST">
+            <div class="mb-3">
+                <label for="title" class="form-label">Service Title</label>
+                <input type="text" class="form-control" id="title" name="title" required 
+                       placeholder="e.g., Do your laundry, Cook dinner, Drive you somewhere">
+            </div>
+            
+            <div class="mb-3">
+                <label for="description" class="form-label">Description (Optional)</label>
+                <textarea class="form-control" id="description" name="description" rows="3" 
+                          placeholder="Provide more details about what this service includes..."></textarea>
+            </div>
+            
+            <div class="mb-3">
+                <label for="block_cost" class="form-label">Block Cost</label>
+                <input type="number" class="form-control" id="block_cost" name="block_cost" min="1" required>
+                <div class="form-text">How many blocks should this service cost?</div>
+            </div>
+            
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">Create Service</button>
+                <a href="{{ url_for('services.marketplace') }}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+        
+        <div class="mt-4">
+            <h5>Service Ideas</h5>
+            <ul class="list-group list-group-flush">
+                <li class="list-group-item">🛠️ Do support for you (2-4 blocks)</li>
+                <li class="list-group-item">📋 Go to the FI review (3-5 blocks)</li>
+                <li class="list-group-item">🎂 Bake a cake for the office (4-6 blocks)</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

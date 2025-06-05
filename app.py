@@ -6,6 +6,7 @@ from routes.auth import auth
 from routes.main import main
 from routes.bets import bets
 from routes.blockchain import blockchain_bp
+from routes.services import services
 from cli import register_cli_commands
 
 def create_app():
@@ -33,6 +34,7 @@ def create_app():
     app.register_blueprint(main)
     app.register_blueprint(bets)
     app.register_blueprint(blockchain_bp)
+    app.register_blueprint(services)
 
     # Register CLI commands
     register_cli_commands(app)
