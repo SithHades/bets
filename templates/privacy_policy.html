@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}Privacy Policy | BetFlow{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-body p-5">
+                    <h1 class="h2 mb-4">Privacy Policy</h1>
+                    <p class="text-muted mb-4">Last updated: {{ current_year }}</p>
+
+                    <h3 class="h4 mt-4 mb-3">1. Information We Collect</h3>
+                    <p>When you use BetFlow, we collect the following information:</p>
+                    <ul>
+                        <li><strong>Account Information:</strong> Your name, email address, and encrypted password when you register</li>
+                        <li><strong>Betting Activity:</strong> Your bet choices, outcomes, wins and losses for platform functionality</li>
+                        <li><strong>Usage Data:</strong> Basic analytics data through Plausible Analytics (privacy-focused, GDPR compliant)</li>
+                        <li><strong>Technical Data:</strong> IP address, browser type, and device information for security and functionality</li>
+                    </ul>
+
+                    <h3 class="h4 mt-4 mb-3">2. How We Use Your Information</h3>
+                    <p>We use your information for:</p>
+                    <ul>
+                        <li>Providing and maintaining the betting platform service</li>
+                        <li>Processing your bets and calculating outcomes</li>
+                        <li>Displaying leaderboards and user statistics</li>
+                        <li>Communicating important service updates</li>
+                        <li>Ensuring platform security and preventing fraud</li>
+                        <li>Improving our service through privacy-focused analytics</li>
+                    </ul>
+
+                    <h3 class="h4 mt-4 mb-3">3. Data Storage and Security</h3>
+                    <p>Your data is stored securely:</p>
+                    <ul>
+                        <li>Hosted on Hetzner servers in Germany (EU jurisdiction)</li>
+                        <li>Passwords are encrypted using bcrypt with salt</li>
+                        <li>Database access is restricted and encrypted</li>
+                        <li>Regular security updates and monitoring</li>
+                    </ul>
+
+                    <h3 class="h4 mt-4 mb-3">4. Data Sharing</h3>
+                    <p>We do not sell, trade, or share your personal information with third parties except:</p>
+                    <ul>
+                        <li><strong>Public Display:</strong> Your name, email and betting statistics are visible to other users as part of the platform's social features</li>
+                        <li><strong>Legal Requirements:</strong> When required by law or to protect our rights</li>
+                        <li><strong>Service Providers:</strong> With trusted partners who help operate our service (Hetzner for hosting, Plausible analytics are self-hosted, so no sharing on this part)</li>
+                    </ul>
+
+                    <h3 class="h4 mt-4 mb-3">5. Your Rights (GDPR)</h3>
+                    <p>Under GDPR, you have the right to:</p>
+                    <ul>
+                        <li><strong>Access:</strong> Request a copy of your personal data</li>
+                        <li><strong>Rectification:</strong> Correct inaccurate personal data</li>
+                        <li><strong>Erasure:</strong> Request deletion of your personal data</li>
+                        <li><strong>Portability:</strong> Receive your data in a portable format</li>
+                        <li><strong>Objection:</strong> Object to processing of your personal data</li>
+                        <li><strong>Restriction:</strong> Request restriction of processing</li>
+                    </ul>
+                    <p>To exercise these rights, contact us using the information in our <a href="{{ url_for('main.imprint') }}" class="text-decoration-none">Imprint</a>.</p>
+
+                    <h3 class="h4 mt-4 mb-3">6. Cookies and Tracking</h3>
+                    <p>We use minimal cookies:</p>
+                    <ul>
+                        <li><strong>Essential Cookies:</strong> Session management and authentication (necessary for service functionality)</li>
+                        <li><strong>Analytics:</strong> Plausible Analytics (no personal data collection, GDPR compliant)</li>
+                        <li>We do not use advertising cookies or tracking cookies</li>
+                    </ul>
+
+                    <h3 class="h4 mt-4 mb-3">7. Data Retention</h3>
+                    <p>We retain your data:</p>
+                    <ul>
+                        <li>Account data: Until you request deletion or account becomes inactive for 2 years</li>
+                        <li>Betting history: Retained for platform integrity but can be anonymized upon request</li>
+                        <li>Analytics data: Automatically expires after 13 months (Plausible default)</li>
+                    </ul>
+
+                    <h3 class="h4 mt-4 mb-3">8. International Transfers</h3>
+                    <p>Your data is processed within the EU (Germany) and not transferred outside the European Economic Area except for Plausible Analytics (EU-based service).</p>
+
+                    <h3 class="h4 mt-4 mb-3">9. Children's Privacy</h3>
+                    <p>BetFlow is not intended for users under 18 years of age. We do not knowingly collect personal information from children under 18.</p>
+
+                    <h3 class="h4 mt-4 mb-3">10. Changes to Privacy Policy</h3>
+                    <p>We may update this privacy policy from time to time. We will notify you of any changes by posting the new privacy policy on this page and updating the "Last updated" date.</p>
+
+                    <h3 class="h4 mt-4 mb-3">11. Contact Information</h3>
+                    <p>For questions about this privacy policy or to exercise your rights, please contact us through the information provided in our <a href="{{ url_for('main.imprint') }}" class="text-decoration-none">Imprint</a>.</p>
+
+                    <div class="mt-5 pt-4 border-top">
+                        <p class="text-muted small">
+                            This privacy policy is designed to comply with the EU General Data Protection Regulation (GDPR) and other applicable privacy laws.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

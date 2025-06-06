@@ -302,9 +302,9 @@
                 <div class="col-md-8 text-center">
                     <p class="mb-0">&copy; {{ current_year }} BetFlow by kncklab. All rights reserved.</p>
                     <div class="mt-2">
-                        <a href="#" class="text-decoration-none text-muted me-3" onclick="return showComingSoon()">Terms of Service</a>
-                        <a href="#" class="text-decoration-none text-muted me-3" onclick="return showComingSoon()">Privacy Policy</a>
-                        <a href="#" class="text-decoration-none text-muted" onclick="return showComingSoon()">Contact Us</a>
+                        <a href="{{ url_for('main.terms_of_service') }}" class="text-decoration-none text-muted me-3">Terms of Service</a>
+                        <a href="{{ url_for('main.privacy_policy') }}" class="text-decoration-none text-muted me-3">Privacy Policy</a>
+                        <a href="{{ url_for('main.imprint') }}" class="text-decoration-none text-muted">Imprint</a>
                     </div>
                 </div>
             </div>

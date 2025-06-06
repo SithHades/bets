@@ -51,3 +51,15 @@ def leaderboard():
         
     users = User.query.order_by(User.wins.desc(), User.losses.asc()).all()
     return render_template('leaderboard.html', users=users)
+
+@main.route('/privacy-policy')
+def privacy_policy():
+    return render_template('privacy_policy.html')
+
+@main.route('/terms-of-service')
+def terms_of_service():
+    return render_template('terms_of_service.html')
+
+@main.route('/imprint')
+def imprint():
+    return render_template('imprint.html')
