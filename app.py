@@ -1,4 +1,4 @@
-from flas import Flask
+from flask import Flask
 from flask_login import LoginManager
 from config import Config, inject_global_template_variables
 from models import db, User
@@ -30,7 +30,7 @@ def create_app():
     app.context_processor(inject_global_template_variables)
 
     # Register blueprints
-    app.register_blueprint(auth)
+    app.register_blueprint(authentication)
     app.register_blueprint(main)
     app.register_blueprint(bets)
     app.register_blueprint(blockchain_bp)
