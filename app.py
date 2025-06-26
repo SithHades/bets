@@ -1,4 +1,4 @@
-from flask import Flask
+from flas import Flask
 from flask_login import LoginManager
 from config import Config, inject_global_template_variables
 from models import db, User
