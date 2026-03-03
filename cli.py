@@ -83,11 +83,29 @@ def register_cli_commands(app):
             for bet in resolved_bets:
                 winners = []
                 losers = []
+                total_participants = bet.user_bets.count()
+                winner_records = [ub for ub in bet.user_bets if ub.chosen_outcome == bet.winning_outcome]
+                num_winners = len(winner_records)
+                blocks_per_winner = total_participants // num_winners if num_winners > 0 else 0
+
                 for user_bet_record in bet.user_bets:
                     user = User.query.get(user_bet_record.user_id)
                     if user:
                         if user_bet_record.chosen_outcome == bet.winning_outcome:
-                            winners.append({'user_id': user.id, 'name': user.name, 'chosen_outcome': user_bet_record.chosen_outcome})
+                            winners.append({'user_id': user.id, 'name': user.name, 'chosen_outcome': user_bet_record.chosen_outcome, 'blocks_earned': blocks_per_winner})
+
+                            # Add blockchain transaction for block rewards
+                            reward_data = {
+                                'bet_id': bet.id,
+                                'bet_title': bet.title,
+                                'winner_id': user.id,
+                                'blocks_awarded': blocks_per_winner,
+                                'total_participants': total_participants,
+                                'reward_time': datetime.datetime.now().isoformat(),
+                                'migrated': True
+                            }
+                            Blockchain.add_transaction('block_reward', user_id=user.id, bet_id=bet.id, data=reward_data)
+                            transactions_created += 1
                         else:
                             losers.append({'user_id': user.id, 'name': user.name, 'chosen_outcome': user_bet_record.chosen_outcome})
                 
