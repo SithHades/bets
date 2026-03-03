@@ -113,12 +113,21 @@ def resolve_bet(bet_id):
     bet.resolved = True
     bet.winning_outcome = winning_outcome
 
-    # Update win/loss records and award blocks to winners
+    # Determine winners and losers
     winners = []
     losers = []
     total_participants = bet.user_bets.count()
-    blocks_per_winner = max(1, total_participants // 2)  # Award more blocks for more competitive bets
     
+    # Identify winners and losers first to calculate correct block distribution
+    winner_records = []
+    for user_bet_record in bet.user_bets:
+        if user_bet_record.chosen_outcome == winning_outcome:
+            winner_records.append(user_bet_record)
+
+    num_winners = len(winner_records)
+    blocks_per_winner = total_participants // num_winners if num_winners > 0 else 0
+
+    # Update win/loss records and award blocks
     for user_bet_record in bet.user_bets:
         user = User.query.get(user_bet_record.user_id)
         if user:
